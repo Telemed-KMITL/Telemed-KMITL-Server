@@ -1,0 +1,26 @@
+{
+  "profiles": {
+    "KmitlTelemedicineServer": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "GOOGLE_APPLICATION_CREDENTIALS": "/secrets/firebase-adminsdk.json"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:80"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
+      "environmentVariables": {
+        "ASPNETCORE_URLS": "http://+:80",
+        "GOOGLE_APPLICATION_CREDENTIALS": "/secrets/firebase-adminsdk.json"
+      },
+      "publishAllPorts": true
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
+}

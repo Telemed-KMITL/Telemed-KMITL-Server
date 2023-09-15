@@ -1,0 +1,17 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "kmitltelemedicineserver",
+      "composeLaunchUrl": "{Scheme}://blockchain.telemed.kmitl.ac.th:{ServicePort}/api/v1/swagger",
+      "serviceActions": {
+        "kmitltelemedicineserver": "StartDebugging",
+        "nginx": "StartWithoutDebugging"
+      },
+      "remoteDebugEnabled": true,
+      "remoteDebugMachine": ""
+    }
+  }
+}
