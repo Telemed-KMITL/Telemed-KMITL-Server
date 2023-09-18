@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using System.Text.Json;
 using Google.Cloud.Firestore;
 
@@ -18,12 +19,12 @@ public sealed class EnumNameConverter<T> : IFirestoreConverter<T>
     {
         NameToValueDic = new Dictionary<string, T>();
         ValueToNameDic = new Dictionary<T, string>();
-
-        foreach (var field in typeof(T).GetFields(BindingFlags.NonPublic | BindingFlags.Static))
+        
+        foreach (var field in typeof(T).GetFields(BindingFlags.Public | BindingFlags.Static))
         {
             var name = JsonNamingPolicy.CamelCase.ConvertName(field.Name);
             var value = (T)field.GetValue(null)!;
-
+            
             if (name == UnknownFieldName)
             {
                 UnknownNameFallback = UnknownFieldName;
