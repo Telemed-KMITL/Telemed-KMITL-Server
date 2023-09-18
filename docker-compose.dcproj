@@ -6,10 +6,14 @@
     <ProjectGuid>c84d78f7-0e5f-4e6f-bdf9-69913b0e44d0</ProjectGuid>
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://blockchain.telemed.kmitl.ac.th:{ServicePort}/api/v1/swagger</DockerServiceUrl>
-    <DockerServiceName>nginx</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="docker-compose.dev.yml">
+      <DependentUpon>docker-compose.yml</DependentUpon>
+    </Content>
   </ItemGroup>
 </Project>
