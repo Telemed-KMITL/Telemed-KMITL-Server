@@ -7,13 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KmitlTelemedicineServer", "
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{C84D78F7-0E5F-4E6F-BDF9-69913B0E44D0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nginx", "nginx", "{B2A7E5EA-CBD4-4CD7-BAD9-B84E085AE8B4}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{465F7BAF-9E77-4C61-B768-C2842FD6C619}"
-	ProjectSection(SolutionItems) = preProject
-		nginx\templates\default.conf.template = nginx\templates\default.conf.template
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,7 +26,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{465F7BAF-9E77-4C61-B768-C2842FD6C619} = {B2A7E5EA-CBD4-4CD7-BAD9-B84E085AE8B4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9FA081CB-3491-4C00-8BAB-398F81A2975D}
