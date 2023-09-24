@@ -400,5 +400,5 @@ FodyWeavers.xsd
 
 ####################
 
-
+*.env
 secrets/
