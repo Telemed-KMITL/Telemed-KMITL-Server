@@ -1,0 +1,50 @@
+server {
+    listen        443 ssl;
+    server_name   default_server;
+    
+    ssl_certificate /etc/letsencrypt/live/blockchain.telemed.kmitl.ac.th/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/blockchain.telemed.kmitl.ac.th/privkey.pem;
+    
+    # KmitlTelemedicineServer
+    
+    location ${API_LOCATION} {
+        proxy_pass         ${API_URL};
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection keep-alive;
+        proxy_set_header   Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+    
+    # Static pages
+    
+    location /app {
+        alias /var/www/html;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+    
+    # Jitsi Meet
+    # https://jitsi.github.io/handbook/docs/devops-guide/devops-guide-docker/#running-behind-a-reverse-proxy
+    
+    location /xmpp-websocket {
+        proxy_pass ${JITSIWEB_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+    
+    location /colibri-ws {
+        proxy_pass ${JITSIWEB_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+    
+    location / {
+        proxy_pass ${JITSIWEB_URL};
+        proxy_http_version 1.1;
+    }
+}

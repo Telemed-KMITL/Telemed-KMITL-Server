@@ -15,5 +15,8 @@
     <Content Include="docker-compose.dev.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </Content>
+    <Content Include="docker-compose_jitsi-override.yml">
+      <DependentUpon>docker-compose.yml</DependentUpon>
+    </Content>
   </ItemGroup>
 </Project>

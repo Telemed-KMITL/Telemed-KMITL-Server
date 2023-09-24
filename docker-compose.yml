@@ -1,19 +1,30 @@
-version: '3.4'
+version: '3.8'
 
+# noinspection ComposeUnknownKeys
+include:
+  - path: "./docker-jitsi-meet-stable/docker-compose.yml"
+    # env_file: "./docker-jitsi-meet-stable/.env"
 services:
   nginx:
     image: nginx:latest
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - "./nginx/templates:/etc/nginx/templates/:r"
       - "./nginx/static:/var/www/html/:r"
+      - "${WEB_HTTP01_ROOT:-/var/www/http01}:/var/www/http01/:r"
+      - "${LETS_ENCRYPT_PATH:-/etc/letsencrypt}:/etc/letsencrypt/:r"
     environment:
-      LISTEN_PORT: 80
-      BACKEND_LOCATION: /api
-      BACKEND_URL: http://kmitltelemedicineserver:5000
+      API_LOCATION: /api
+      API_URL: http://kmitltelemedicineserver:5000
+      JITSIWEB_URL: http://web:80
     depends_on:
       - kmitltelemedicineserver
+      - web
+    networks:
+      - default
+      - meet.jitsi
   kmitltelemedicineserver:
     image: ${DOCKER_REGISTRY-}kmitltelemedicineserver
     build:

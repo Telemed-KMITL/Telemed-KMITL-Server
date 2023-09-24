@@ -5,7 +5,6 @@ namespace KmitlTelemedicineServer;
 [FirestoreData(ConverterType = typeof(EnumNameConverter<VisitStatus>))]
 public enum VisitStatus
 {
-    Created,
     Ready,
     Finished,
     Unknown
@@ -42,11 +41,9 @@ class WaitingUser
 
     [FirestoreProperty("status")] public WaitingUserStatus Status { get; set; }
 
-    [FirestoreProperty("jitsiRoomName")] public string? JitsiRoomName { get; set; }
+    [FirestoreProperty("jitsiRoomName")] public string JitsiRoomName { get; set; }
 
-    [FirestoreDocumentCreateTimestamp]
-    public Timestamp CreatedAt { get; set; }
+    [FirestoreDocumentCreateTimestamp] public Timestamp CreatedAt { get; set; }
 
-    [FirestoreDocumentUpdateTimestamp]
-    public Timestamp UpdatedAt { get; set; }
+    [FirestoreDocumentUpdateTimestamp] public Timestamp UpdatedAt { get; set; }
 }
