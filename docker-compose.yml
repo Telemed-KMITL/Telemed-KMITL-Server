@@ -2,8 +2,8 @@ version: '3.8'
 
 # noinspection ComposeUnknownKeys
 include:
-  - path: "./docker-jitsi-meet-stable/docker-compose.yml"
-    # env_file: "./docker-jitsi-meet-stable/.env"
+  - path: "./docker-jitsi-meet/docker-compose.yml"
+    # env_file: "./docker-jitsi-meet/.env"
 services:
   nginx:
     image: nginx:latest
