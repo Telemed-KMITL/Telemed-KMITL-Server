@@ -2,8 +2,9 @@
 <project version="4">
   <component name="UserContentModel">
     <attachedFolders>
-      <Path>docker-jitsi-meet-stable-8960</Path>
+      <Path>docker-jitsi-meet</Path>
       <Path>nginx</Path>
+      <Path>secrets</Path>
     </attachedFolders>
     <explicitIncludes />
     <explicitExcludes />
