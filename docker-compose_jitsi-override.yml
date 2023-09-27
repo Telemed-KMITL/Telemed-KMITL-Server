@@ -24,7 +24,6 @@ services:
       - "DISABLE_POLLS=1"
       - "ENABLE_BREAKOUT_ROOMS=0"
       - "ENABLE_RECORDING=0"
-      - "PROSODY_RESERVATION_ENABLED=true"
   jicofo:
     environment:
       - "ENABLE_RECORDING=0"
