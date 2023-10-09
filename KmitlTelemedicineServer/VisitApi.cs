@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Google.Cloud.Firestore;
-using Microsoft.Extensions.Options;
 
 namespace KmitlTelemedicineServer;
 
@@ -12,7 +11,7 @@ public static class VisitApiExtension
             .MapPost(VisitApi.BasePath + "/create", VisitApi.CreateVisitAsync)
             .WithCommonSettings()
             .WithName("CreateVisit")
-            .Produces<CreateVisitSucessResponse>()
+            .Produces<CreateVisitSuccessResponse>()
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status401Unauthorized);
 
@@ -29,7 +28,7 @@ public static class VisitApiExtension
 
     private static RouteHandlerBuilder WithCommonSettings(this RouteHandlerBuilder builder)
     {
-        return builder.RequireAuthorization("ValidToken");
+        return builder.RequireAuthorization("RequireEmailVerified");
     }
 }
 
@@ -42,18 +41,18 @@ public class VisitApi
     public static async Task<IResult> CreateVisitAsync(
         FirestoreDb firestore,
         FirebaseDbUserProvider userProvider,
-        IOptions<ServerConfig> config,
+        ServerConfig config,
         ILogger<VisitApi> logger)
     {
-        if (!await userProvider.FetchAsync()) return Results.BadRequest();
+        if (!await userProvider.FetchAsync()) return Results.BadRequest("Failed to get user");
 
         var currentDateTime = DateTimeOffset.Now;
         var currentTimeStamp = Timestamp.FromDateTimeOffset(currentDateTime);
 
         var defaultWaitingRoomRef = firestore
             .Collection("waitingRooms")
-            .Document(config.Value.DefaultWaitingRoomId);
-        var visitId = currentDateTime.ToString(config.Value.VisitIdDateFormat);
+            .Document(config.DefaultWaitingRoomId);
+        var visitId = currentDateTime.ToString(config.VisitIdDateFormat);
 
         var newVisitRef = userProvider.Reference
             .Collection("visits")
@@ -94,7 +93,7 @@ public class VisitApi
             "[CreateVisit] Committed: \"{}\", \"{}\"",
             newVisitRef.Path, newWaitingUserRef.Path);
 
-        return Results.Ok(new CreateVisitSucessResponse(
+        return Results.Ok(new CreateVisitSuccessResponse(
             userProvider.Id,
             visitId
         ));
@@ -163,4 +162,4 @@ public class VisitApi
     }
 }
 
-public record CreateVisitSucessResponse(string UserId, string VisitId, string Status = "Success");
+public record CreateVisitSuccessResponse(string UserId, string VisitId, string Status = "Success");

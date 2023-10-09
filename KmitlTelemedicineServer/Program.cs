@@ -1,28 +1,20 @@
 using System.Security.Claims;
-using AspNetCore.Firebase.Authentication.Extensions;
+using System.Text.Json.Nodes;
 using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
+using FirebaseAdmin.Auth;
+using Google;
 using Google.Cloud.Firestore;
 using KmitlTelemedicineServer;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 
 internal class Program
 {
-    private static string _projectId;
-
     public static void Main(string[] args)
     {
-        FirebaseApp.Create();
-        _projectId =
-            (FirebaseApp.DefaultInstance.Options.Credential.UnderlyingCredential
-                as ServiceAccountCredential)!
-            .ProjectId;
-
         var app = BuildApplication(args);
 
+        InitializeFirebase(app);
         Configure(app);
 
         app.Run();
@@ -31,28 +23,29 @@ internal class Program
     private static WebApplication BuildApplication(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        var config = builder.Configuration.GetServerConfig();
 
+        builder.Services.AddServerConfig(config);
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
         });
-        builder.Services.AddServerConfig(builder.Configuration);
-        builder.Services.AddSingleton<FirestoreDb>(_ => FirestoreDb.Create(_projectId));
-        builder.Services.AddFirebaseAuthentication(_projectId);
+        builder.Services.AddSingleton<FirestoreDb>(provider => FirestoreDb.Create(config.FirebaseProjectId));
+        builder.Services.AddFirebaseAuthentication(config.FirebaseProjectId);
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("ValidToken", b =>
+            options.AddPolicy("RequireEmailVerified", policy =>
             {
-                b.RequireAssertion(context =>
+                policy.RequireAuthenticatedUser();
+                policy.RequireAssertion(context =>
                 {
                     var user = context.User;
 
-                    var uid = user.FindFirstValue(ClaimTypes.NameIdentifier);
                     var email = user.FindFirstValue(ClaimTypes.Email);
-                    var emailVerified = user.FindFirstValue("email_verified").ToLower() == "true";
+                    var emailVerified = user.FindFirstValue("email_verified")?.ToLower() == "true";
 
-                    return string.IsNullOrEmpty(uid) && (string.IsNullOrEmpty(email) || emailVerified);
+                    return string.IsNullOrEmpty(email) || emailVerified;
                 });
             });
         });
@@ -62,7 +55,8 @@ internal class Program
             {
                 Name = "FirebaseJwtBarer",
                 Type = SecuritySchemeType.Http,
-                Scheme = JwtBearerDefaults.AuthenticationScheme,
+                // NOTE: openapi-generator's BearerAuthInterceptor accepts only "bearer" (not "Bearer")
+                Scheme = "bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header
             };
@@ -100,7 +94,9 @@ internal class Program
 
     private static void Configure(WebApplication app)
     {
-        var config = app.Services.GetRequiredService<IOptions<ServerConfig>>().Value;
+        var config = app.Services.GetRequiredService<ServerConfig>();
+
+        app.UseHttpLogging();
 
         if (!string.IsNullOrWhiteSpace(config.PathBase))
         {
@@ -112,15 +108,46 @@ internal class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
+        app.UseForwardedHeaders();
+
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
             app.UseSwaggerUI();
             app.UseCors();
+
+            app.MapGet("/dev/getToken", async (string uid) =>
+            {
+                var customToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(uid);
+
+                if (customToken == null) return Results.BadRequest();
+
+                var requestUrl =
+                    "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?" +
+                    $"key={config.OnlyForDevelopment_FirebaseWebApiKey}";
+
+                var body = new
+                {
+                    token = customToken,
+                    returnSecureToken = true
+                };
+
+                var apiResponse = await new HttpClient().PostAsJsonAsync(requestUrl, body);
+                var content = await apiResponse.Content.ReadAsStringAsync();
+
+                app.Logger.LogDebug("POST \"{}\":\n{}", requestUrl, content);
+
+                var response = JsonNode.Parse(content)!["idToken"]!.GetValue<string>();
+                return Results.Text(response);
+            });
         }
 
-        app.UseForwardedHeaders();
-
         app.MapVisitApiEndpoints();
+    }
+
+    private static void InitializeFirebase(WebApplication app)
+    {
+        ApplicationContext.RegisterLogger(new GoogleLoggingWrapper(app));
+        FirebaseApp.Create();
     }
 }

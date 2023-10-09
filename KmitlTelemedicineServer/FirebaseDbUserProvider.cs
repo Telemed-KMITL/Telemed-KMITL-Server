@@ -35,7 +35,8 @@ public class FirebaseDbUserProvider
 
     public async Task<bool> FetchAsync()
     {
-        var uid = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = _httpContextAccessor.HttpContext!.User;
+        var uid = user.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (string.IsNullOrEmpty(uid))
         {
@@ -44,11 +45,13 @@ public class FirebaseDbUserProvider
         }
 
         var documentRef = _firestore.Collection("users").Document(uid);
+        _logger.LogTrace("User: {}", documentRef.Path);
+
         var snapshot = await documentRef.GetSnapshotAsync();
 
         if (!snapshot.Exists)
         {
-            _logger.LogTrace("User \"{}\" is not exists", documentRef.Path);
+            _logger.LogTrace("User \"{}\" is not exist", uid);
             return false;
         }
 
