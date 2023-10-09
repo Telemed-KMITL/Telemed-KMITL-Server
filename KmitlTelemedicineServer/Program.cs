@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AspNetCore.Firebase.Authentication.Extensions;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
@@ -20,14 +21,14 @@ internal class Program
                 as ServiceAccountCredential)!
             .ProjectId;
 
-        WebApplication app = BuildApplication(args);
+        var app = BuildApplication(args);
 
         Configure(app);
 
         app.Run();
     }
 
-    static WebApplication BuildApplication(string[] args)
+    private static WebApplication BuildApplication(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -39,37 +40,65 @@ internal class Program
         builder.Services.AddServerConfig(builder.Configuration);
         builder.Services.AddSingleton<FirestoreDb>(_ => FirestoreDb.Create(_projectId));
         builder.Services.AddFirebaseAuthentication(_projectId);
-        builder.Services.AddAuthorization();
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("ValidToken", b =>
+            {
+                b.RequireAssertion(context =>
+                {
+                    var user = context.User;
+
+                    var uid = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                    var email = user.FindFirstValue(ClaimTypes.Email);
+                    var emailVerified = user.FindFirstValue("email_verified").ToLower() == "true";
+
+                    return string.IsNullOrEmpty(uid) && (string.IsNullOrEmpty(email) || emailVerified);
+                });
+            });
+        });
         builder.Services.AddSwaggerGen(options =>
         {
             var securityScheme = new OpenApiSecurityScheme
             {
                 Name = "FirebaseJwtBarer",
                 Type = SecuritySchemeType.Http,
-                Scheme = JwtBearerDefaults.AuthenticationScheme
+                Scheme = JwtBearerDefaults.AuthenticationScheme,
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header
             };
 
             options.AddSecurityDefinition(securityScheme.Name, securityScheme);
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
-                { securityScheme, Array.Empty<string>() }
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = securityScheme.Name
+                        }
+                    },
+                    Array.Empty<string>()
+                }
             });
         });
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddCors(options =>
         {
-            options.AddDefaultPolicy(builder =>
+            options.AddDefaultPolicy(b =>
             {
-                builder.AllowAnyOrigin();
-                builder.AllowAnyHeader();
-                builder.AllowAnyMethod();
+                b.AllowAnyOrigin();
+                b.AllowAnyHeader();
+                b.AllowAnyMethod();
             });
         });
+        builder.Services.AddTransient<FirebaseDbUserProvider>();
 
         return builder.Build();
     }
 
-    static void Configure(WebApplication app)
+    private static void Configure(WebApplication app)
     {
         var config = app.Services.GetRequiredService<IOptions<ServerConfig>>().Value;
 
@@ -92,6 +121,6 @@ internal class Program
 
         app.UseForwardedHeaders();
 
-        app.MapApiEndpoints();
+        app.MapVisitApiEndpoints();
     }
 }
