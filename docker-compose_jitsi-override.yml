@@ -19,6 +19,7 @@ services:
       - "ENABLE_REQUIRE_DISPLAY_NAME=1"
       - "ENABLE_RECORDING=0"
       - "WHITEBOARD_ENABLED=0"
+      - "TOOLBAR_BUTTONS=camera,chat,filmstrip,fullscreen,help,microphone,noisesuppression,profile,settings,stats,toggle-camera"
   prosody:
     environment:
       - "DISABLE_POLLS=1"

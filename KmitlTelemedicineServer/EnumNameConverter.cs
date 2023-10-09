@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json;
 using Google.Cloud.Firestore;
 
@@ -19,12 +18,12 @@ public sealed class EnumNameConverter<T> : IFirestoreConverter<T>
     {
         NameToValueDic = new Dictionary<string, T>();
         ValueToNameDic = new Dictionary<T, string>();
-        
+
         foreach (var field in typeof(T).GetFields(BindingFlags.Public | BindingFlags.Static))
         {
             var name = JsonNamingPolicy.CamelCase.ConvertName(field.Name);
             var value = (T)field.GetValue(null)!;
-            
+
             if (name == UnknownFieldName)
             {
                 UnknownNameFallback = UnknownFieldName;
@@ -39,30 +38,22 @@ public sealed class EnumNameConverter<T> : IFirestoreConverter<T>
 
         if (UnknownValueFallback.HasValue &&
             ValueToNameDic.TryGetValue(UnknownValueFallback.Value, out var fallback))
-        {
             UnknownNameFallback = fallback;
-        }
     }
 
     public T FromFirestore(object name)
     {
-        if (NameToValueDic.TryGetValue((string)name, out var result))
-        {
-            return result;
-        }
-        
-        return UnknownValueFallback 
+        if (NameToValueDic.TryGetValue((string)name, out var result)) return result;
+
+        return UnknownValueFallback
                ?? throw new ArgumentException($"Unknown name '{name}' for enum {typeof(T).FullName}");
     }
 
     public object ToFirestore(T value)
     {
-        if (ValueToNameDic.TryGetValue(value, out var result))
-        {
-            return result;
-        }
+        if (ValueToNameDic.TryGetValue(value, out var result)) return result;
 
-        return UnknownNameFallback 
+        return UnknownNameFallback
                ?? throw new ArgumentException($"Unknown value '{value}' for enum {typeof(T).FullName}");
     }
 }

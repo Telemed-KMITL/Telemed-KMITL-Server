@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" Sdk="Microsoft.Docker.Sdk">
-  <PropertyGroup Label="Globals">
-    <ProjectVersion>2.1</ProjectVersion>
-    <DockerTargetOS>Linux</DockerTargetOS>
-    <ProjectGuid>c84d78f7-0e5f-4e6f-bdf9-69913b0e44d0</ProjectGuid>
-    <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
-    <DockerServiceUrl>{Scheme}://blockchain.telemed.kmitl.ac.th:{ServicePort}/api/v1/swagger</DockerServiceUrl>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Include="docker-compose.yml" />
-    <None Include=".dockerignore" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="docker-compose.dev.yml">
-      <DependentUpon>docker-compose.yml</DependentUpon>
-    </Content>
-    <Content Include="docker-compose_jitsi-override.yml">
-      <DependentUpon>docker-compose.yml</DependentUpon>
-    </Content>
-  </ItemGroup>
+    <PropertyGroup Label="Globals">
+        <ProjectVersion>2.1</ProjectVersion>
+        <DockerTargetOS>Linux</DockerTargetOS>
+        <ProjectGuid>c84d78f7-0e5f-4e6f-bdf9-69913b0e44d0</ProjectGuid>
+        <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
+        <DockerServiceUrl>{Scheme}://blockchain.telemed.kmitl.ac.th:{ServicePort}/api/v1/swagger</DockerServiceUrl>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Include="docker-compose.yml"/>
+        <None Include=".dockerignore"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="docker-compose.dev.yml">
+            <DependentUpon>docker-compose.yml</DependentUpon>
+        </Content>
+        <Content Include="docker-compose_jitsi-override.yml">
+            <DependentUpon>docker-compose.yml</DependentUpon>
+        </Content>
+    </ItemGroup>
 </Project>
