@@ -3,45 +3,36 @@ using Google.Cloud.Firestore;
 
 namespace KmitlTelemedicineServer;
 
-public class FirebaseDbUserProvider
+public class FirebaseUserAccessor
 {
     private readonly FirestoreDb _firestore;
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    private readonly ILogger<FirebaseDbUserProvider> _logger;
+    private readonly ILogger<FirebaseUserAccessor> _logger;
 
-    private DocumentSnapshot? _data;
-
-    private DocumentReference? _reference;
-
-    public FirebaseDbUserProvider(
+    public FirebaseUserAccessor(
         IHttpContextAccessor httpContextAccessor,
         FirestoreDb firestore,
-        ILogger<FirebaseDbUserProvider> logger)
+        ILogger<FirebaseUserAccessor> logger)
     {
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         _firestore = firestore;
         _logger = logger;
     }
 
-    public DocumentReference Reference => _reference!;
+    public string? UserId => _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-    public DocumentSnapshot Snapshot => _data!;
+    public string? Role => _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Role);
 
-    public string Id => _data!.Id;
-
-    public Dictionary<string, object> Data => _data!.ToDictionary();
-
-    public async Task<bool> FetchAsync()
+    public async Task<DocumentSnapshot?> FetchDbUserAsync()
     {
-        var user = _httpContextAccessor.HttpContext!.User;
-        var uid = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var uid = UserId;
 
         if (string.IsNullOrEmpty(uid))
         {
             _logger.LogTrace("Failed to get uid");
-            return false;
+            return null;
         }
 
         var documentRef = _firestore.Collection("users").Document(uid);
@@ -52,11 +43,9 @@ public class FirebaseDbUserProvider
         if (!snapshot.Exists)
         {
             _logger.LogTrace("User \"{}\" is not exist", uid);
-            return false;
+            return null;
         }
 
-        _reference = documentRef;
-        _data = snapshot;
-        return true;
+        return snapshot;
     }
 }

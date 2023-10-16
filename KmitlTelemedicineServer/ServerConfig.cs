@@ -8,13 +8,23 @@ public record ServerConfig(
     string VisitIdDateFormat,
     string PathBase,
     string FirebaseProjectId,
+    string JwtRoleClaimName,
+    int UserNameMaxLength,
     // ReSharper disable once InconsistentNaming
     string OnlyForDevelopment_FirebaseWebApiKey)
 {
     public const string Section = "ServerConfig";
 
     public ServerConfig()
-        : this("", "", "/", "", "")
+        : this(
+            DefaultWaitingRoomId: "",
+            VisitIdDateFormat: "",
+            PathBase: "/",
+            FirebaseProjectId: "",
+            JwtRoleClaimName: "role",
+            UserNameMaxLength: 100,
+            OnlyForDevelopment_FirebaseWebApiKey: ""
+        )
     {
     }
 }

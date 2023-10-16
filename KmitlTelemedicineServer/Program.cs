@@ -1,12 +1,33 @@
 using System.Security.Claims;
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Google;
 using Google.Cloud.Firestore;
-using KmitlTelemedicineServer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
+
+namespace KmitlTelemedicineServer;
+
+internal class EnumParameterPatch : IParameterFilter
+{
+    public void Apply(OpenApiParameter parameter, ParameterFilterContext context)
+    {
+        var type = context.ParameterInfo?.ParameterType;
+        if (type == null)
+            return;
+        if (type.IsEnum)
+            parameter.Schema = new OpenApiSchema
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.Schema, Id = type.Name }
+            };
+    }
+}
 
 internal class Program
 {
@@ -26,31 +47,32 @@ internal class Program
         var config = builder.Configuration.GetServerConfig();
 
         builder.Services.AddServerConfig(config);
-        builder.Services.AddEndpointsApiExplorer();
         builder.Services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
         });
-        builder.Services.AddSingleton<FirestoreDb>(provider => FirestoreDb.Create(config.FirebaseProjectId));
-        builder.Services.AddFirebaseAuthentication(config.FirebaseProjectId);
-        builder.Services.AddAuthorization(options =>
+        builder.Services.Configure<JsonOptions>(options =>
         {
-            options.AddPolicy("RequireEmailVerified", policy =>
-            {
-                policy.RequireAuthenticatedUser();
-                policy.RequireAssertion(context =>
-                {
-                    var user = context.User;
-
-                    var email = user.FindFirstValue(ClaimTypes.Email);
-                    var emailVerified = user.FindFirstValue("email_verified")?.ToLower() == "true";
-
-                    return string.IsNullOrEmpty(email) || emailVerified;
-                });
-            });
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(
+                JsonNamingPolicy.CamelCase,
+                false));
+            options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.SerializerOptions.PropertyNameCaseInsensitive = true;
         });
+        builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+        {
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(
+                JsonNamingPolicy.CamelCase,
+                false));
+            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        });
+
+        builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
         {
+            options.SwaggerGeneratorOptions.ParameterFilters.Add(new EnumParameterPatch());
+
             var securityScheme = new OpenApiSecurityScheme
             {
                 Name = "FirebaseJwtBarer",
@@ -77,6 +99,7 @@ internal class Program
                 }
             });
         });
+
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddCors(options =>
         {
@@ -87,7 +110,14 @@ internal class Program
                 b.AllowAnyMethod();
             });
         });
-        builder.Services.AddTransient<FirebaseDbUserProvider>();
+
+        builder.Services.AddSingleton<FirestoreDb>(provider => new FirestoreDbBuilder
+        {
+            ProjectId = provider.GetRequiredService<ServerConfig>().FirebaseProjectId
+        }.Build(provider));
+        builder.Services.AddFirebaseAuthentication(config);
+        builder.Services.AddAuthorization(ConfiureAuthPolicy);
+        builder.Services.AddTransient<FirebaseUserAccessor>();
 
         return builder.Build();
     }
@@ -139,15 +169,41 @@ internal class Program
 
                 var response = JsonNode.Parse(content)!["idToken"]!.GetValue<string>();
                 return Results.Text(response);
-            });
+            }).ExcludeFromDescription();
         }
 
         app.MapVisitApiEndpoints();
+        app.MapUserApiEndpoints();
     }
 
     private static void InitializeFirebase(WebApplication app)
     {
         ApplicationContext.RegisterLogger(new GoogleLoggingWrapper(app));
         FirebaseApp.Create();
+    }
+
+    private static void ConfiureAuthPolicy(AuthorizationOptions options)
+    {
+        options.AddPolicy("RequireEmailVerified", policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.RequireAssertion(context =>
+            {
+                var user = context.User;
+
+                var email = user.FindFirstValue(ClaimTypes.Email);
+                var emailVerified = user.FindFirstValue("email_verified")?.ToLower() == "true";
+
+                return string.IsNullOrEmpty(email) || emailVerified;
+            });
+        });
+
+        options.AddPolicy("OnlyForAdmins", policy => policy.RequireRole("admin"));
+
+        options.AddPolicy("OnlyForDoctors", policy => policy.RequireRole("admin", "doctor"));
+
+        options.AddPolicy("OnlyForStaffs", policy => policy.RequireRole("admin", "doctor", "nurse"));
+
+        options.AddPolicy("OnlyForPatients", policy => policy.RequireRole("admin", "patient"));
     }
 }

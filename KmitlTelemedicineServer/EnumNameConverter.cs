@@ -43,13 +43,23 @@ public sealed class EnumNameConverter<T> : IFirestoreConverter<T>
 
     public T FromFirestore(object name)
     {
-        if (NameToValueDic.TryGetValue((string)name, out var result)) return result;
-
-        return UnknownValueFallback
-               ?? throw new ArgumentException($"Unknown name '{name}' for enum {typeof(T).FullName}");
+        return Parse((string)name);
     }
 
     public object ToFirestore(T value)
+    {
+        return GetStringValue(value);
+    }
+
+    public static T Parse(string value)
+    {
+        if (NameToValueDic.TryGetValue(value, out var result)) return result;
+
+        return UnknownValueFallback
+               ?? throw new ArgumentException($"Unknown name '{value}' for enum {typeof(T).FullName}");
+    }
+
+    public static string GetStringValue(T value)
     {
         if (ValueToNameDic.TryGetValue(value, out var result)) return result;
 

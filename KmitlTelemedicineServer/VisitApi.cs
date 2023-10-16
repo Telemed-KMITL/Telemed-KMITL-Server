@@ -9,7 +9,7 @@ public static class VisitApiExtension
     {
         builder
             .MapPost(VisitApi.BasePath + "/create", VisitApi.CreateVisitAsync)
-            .WithCommonSettings()
+            .RequireAuthorization("RequireEmailVerified", "OnlyForPatients")
             .WithName("CreateVisit")
             .Produces<CreateVisitSuccessResponse>()
             .Produces(StatusCodes.Status400BadRequest)
@@ -17,18 +17,13 @@ public static class VisitApiExtension
 
         builder
             .MapPost(VisitApi.BasePath + "/finish", VisitApi.FinishVisitAsync)
-            .WithCommonSettings()
+            .RequireAuthorization("RequireEmailVerified", "OnlyForStaffs")
             .WithName("FinishVisit")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status401Unauthorized);
 
         return builder;
-    }
-
-    private static RouteHandlerBuilder WithCommonSettings(this RouteHandlerBuilder builder)
-    {
-        return builder.RequireAuthorization("RequireEmailVerified");
     }
 }
 
@@ -40,11 +35,12 @@ public class VisitApi
 
     public static async Task<IResult> CreateVisitAsync(
         FirestoreDb firestore,
-        FirebaseDbUserProvider userProvider,
+        FirebaseUserAccessor userAccessor,
         ServerConfig config,
         ILogger<VisitApi> logger)
     {
-        if (!await userProvider.FetchAsync()) return Results.BadRequest("Failed to get user");
+        var userSnapshot = await userAccessor.FetchDbUserAsync();
+        if (userSnapshot == null) return Results.BadRequest("Failed to get user");
 
         var currentDateTime = DateTimeOffset.Now;
         var currentTimeStamp = Timestamp.FromDateTimeOffset(currentDateTime);
@@ -54,7 +50,7 @@ public class VisitApi
             .Document(config.DefaultWaitingRoomId);
         var visitId = currentDateTime.ToString(config.VisitIdDateFormat);
 
-        var newVisitRef = userProvider.Reference
+        var newVisitRef = userSnapshot.Reference
             .Collection("visits")
             .Document(visitId);
         var newWaitingUserRef = defaultWaitingRoomRef
@@ -65,7 +61,7 @@ public class VisitApi
 
         logger.LogTrace(
             "[CreateVisit] UID: {}, VisitID: {}, WaitingUserID: {}, JitsiRoomName: {}",
-            userProvider.Id, visitId, newWaitingUserRef.Id, roomName);
+            userSnapshot.Id, visitId, newWaitingUserRef.Id, roomName);
 
         var batch = firestore.StartBatch();
         {
@@ -80,9 +76,9 @@ public class VisitApi
             {
                 CreatedAt = currentTimeStamp,
                 UpdatedAt = currentTimeStamp,
-                UserId = userProvider.Id,
+                UserId = userSnapshot.Id,
                 VisitId = visitId,
-                User = userProvider.Data,
+                User = userSnapshot.ToDictionary(),
                 Status = WaitingUserStatus.Waiting,
                 JitsiRoomName = roomName
             });
@@ -94,7 +90,7 @@ public class VisitApi
             newVisitRef.Path, newWaitingUserRef.Path);
 
         return Results.Ok(new CreateVisitSuccessResponse(
-            userProvider.Id,
+            userSnapshot.Id,
             visitId
         ));
     }
@@ -162,4 +158,4 @@ public class VisitApi
     }
 }
 
-public record CreateVisitSuccessResponse(string UserId, string VisitId, string Status = "Success");
+public record CreateVisitSuccessResponse(string UserId, string VisitId);
