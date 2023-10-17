@@ -34,6 +34,7 @@ public class VisitApi
     private const string FirestoreDocumentIdRegex = @"^(?!\.\.?$)(?!.*__.*__)([^/]{1,1500})$";
 
     public static async Task<IResult> CreateVisitAsync(
+        bool? ignoreUnfinishedVisits,
         FirestoreDb firestore,
         FirebaseUserAccessor userAccessor,
         ServerConfig config,
@@ -42,17 +43,38 @@ public class VisitApi
         var userSnapshot = await userAccessor.FetchDbUserAsync();
         if (userSnapshot == null) return Results.BadRequest("Failed to get user");
 
+        if (ignoreUnfinishedVisits != true)
+        {
+            // If user's visit is not finished, return that visit
+            var userVisitNotFinished = await userSnapshot.Reference
+                .Collection("visits")
+                .WhereEqualTo("isFinished", false)
+                .OrderBy("createdAt")
+                .Limit(1)
+                .GetSnapshotAsync();
+            if (userVisitNotFinished.Any())
+            {
+                return Results.Ok(new CreateVisitSuccessResponse(
+                    UserId: userSnapshot.Id,
+                    VisitId: userVisitNotFinished.First().Id,
+                    Created: false
+                ));
+            }
+        }
+
+        // Create new waitingUser/visit
+
         var currentDateTime = DateTimeOffset.Now;
         var currentTimeStamp = Timestamp.FromDateTimeOffset(currentDateTime);
 
         var defaultWaitingRoomRef = firestore
             .Collection("waitingRooms")
             .Document(config.DefaultWaitingRoomId);
-        var visitId = currentDateTime.ToString(config.VisitIdDateFormat);
+        var newVisitId = currentDateTime.ToString(config.VisitIdDateFormat);
 
         var newVisitRef = userSnapshot.Reference
             .Collection("visits")
-            .Document(visitId);
+            .Document(newVisitId);
         var newWaitingUserRef = defaultWaitingRoomRef
             .Collection("waitingUsers")
             .Document();
@@ -61,7 +83,7 @@ public class VisitApi
 
         logger.LogTrace(
             "[CreateVisit] UID: {}, VisitID: {}, WaitingUserID: {}, JitsiRoomName: {}",
-            userSnapshot.Id, visitId, newWaitingUserRef.Id, roomName);
+            userSnapshot.Id, newVisitId, newWaitingUserRef.Id, roomName);
 
         var batch = firestore.StartBatch();
         {
@@ -77,7 +99,7 @@ public class VisitApi
                 CreatedAt = currentTimeStamp,
                 UpdatedAt = currentTimeStamp,
                 UserId = userSnapshot.Id,
-                VisitId = visitId,
+                VisitId = newVisitId,
                 User = userSnapshot.ToDictionary(),
                 Status = WaitingUserStatus.Waiting,
                 JitsiRoomName = roomName
@@ -90,8 +112,9 @@ public class VisitApi
             newVisitRef.Path, newWaitingUserRef.Path);
 
         return Results.Ok(new CreateVisitSuccessResponse(
-            userSnapshot.Id,
-            visitId
+            UserId: userSnapshot.Id,
+            VisitId: newVisitId,
+            Created: true
         ));
     }
 
@@ -158,4 +181,4 @@ public class VisitApi
     }
 }
 
-public record CreateVisitSuccessResponse(string UserId, string VisitId);
+public record CreateVisitSuccessResponse(string UserId, string VisitId, bool Created);
