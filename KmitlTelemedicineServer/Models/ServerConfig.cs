@@ -1,4 +1,4 @@
-﻿namespace KmitlTelemedicineServer;
+﻿namespace KmitlTelemedicineServer.Models;
 
 /// <summary>
 ///     Wrapper for `appsettings.json`
@@ -17,13 +17,13 @@ public record ServerConfig(
 
     public ServerConfig()
         : this(
-            DefaultWaitingRoomId: "",
-            VisitIdDateFormat: "",
-            PathBase: "/",
-            FirebaseProjectId: "",
-            JwtRoleClaimName: "role",
-            UserNameMaxLength: 100,
-            OnlyForDevelopment_FirebaseWebApiKey: ""
+            "",
+            "",
+            "/",
+            "",
+            "role",
+            100,
+            ""
         )
     {
     }

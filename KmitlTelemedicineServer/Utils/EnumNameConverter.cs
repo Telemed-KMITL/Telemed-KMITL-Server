@@ -2,9 +2,9 @@
 using System.Text.Json;
 using Google.Cloud.Firestore;
 
-namespace KmitlTelemedicineServer;
+namespace KmitlTelemedicineServer.Utils;
 
-public sealed class EnumNameConverter<T> : IFirestoreConverter<T>
+internal sealed class EnumNameConverter<T> : IFirestoreConverter<T>
     where T : struct, Enum
 {
     private const string UnknownFieldName = "unknown";
@@ -53,10 +53,16 @@ public sealed class EnumNameConverter<T> : IFirestoreConverter<T>
 
     public static T Parse(string value)
     {
-        if (NameToValueDic.TryGetValue(value, out var result)) return result;
-
-        return UnknownValueFallback
+        return TryParse(value, true)
                ?? throw new ArgumentException($"Unknown name '{value}' for enum {typeof(T).FullName}");
+    }
+
+    public static T? TryParse(string? value, bool allowUnknownFallback = false)
+    {
+        if (string.IsNullOrEmpty(value)) return null;
+        if (NameToValueDic.TryGetValue(value, out var result)) return result;
+        if (allowUnknownFallback) return UnknownValueFallback;
+        return null;
     }
 
     public static string GetStringValue(T value)

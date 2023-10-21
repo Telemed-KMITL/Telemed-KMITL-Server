@@ -6,6 +6,8 @@ using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Google;
 using Google.Cloud.Firestore;
+using KmitlTelemedicineServer.Models;
+using KmitlTelemedicineServer.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -67,6 +69,8 @@ internal class Program
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         });
+
+        builder.Services.AddControllers();
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
@@ -172,8 +176,7 @@ internal class Program
             }).ExcludeFromDescription();
         }
 
-        app.MapVisitApiEndpoints();
-        app.MapUserApiEndpoints();
+        app.MapControllers();
     }
 
     private static void InitializeFirebase(WebApplication app)

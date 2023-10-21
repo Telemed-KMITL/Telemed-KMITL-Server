@@ -1,7 +1,9 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Google.Cloud.Firestore;
+using KmitlTelemedicineServer.Utils;
 
-namespace KmitlTelemedicineServer;
+namespace KmitlTelemedicineServer.Models;
 
 [FirestoreData(ConverterType = typeof(EnumNameConverter<UserStatus>))]
 public enum UserStatus
@@ -22,17 +24,23 @@ public enum UserRole
 [FirestoreData]
 public class User
 {
-    [FirestoreProperty("firstName")] public string FirstName { get; set; }
+    [Required]
+    [FirestoreProperty("firstName")]
+    public string FirstName { get; set; }
 
-    [FirestoreProperty("lastName")] public string LastName { get; set; }
+    [Required]
+    [FirestoreProperty("lastName")]
+    public string LastName { get; set; }
 
     [FirestoreProperty("HN")]
     [JsonPropertyName("HN")]
     public string? Hn { get; set; }
 
-    [FirestoreProperty("status")] public UserStatus Status { get; set; }
+    [Required]
+    [FirestoreProperty("status")]
+    public UserStatus Status { get; set; }
 
-    [FirestoreProperty("role")] public UserRole? Role { get; set; }
+    [Required] [FirestoreProperty("role")] public UserRole Role { get; set; }
 }
 
 [FirestoreData(ConverterType = typeof(EnumNameConverter<VisitStatus>))]

@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Google.Cloud.Firestore;
 
-namespace KmitlTelemedicineServer;
+namespace KmitlTelemedicineServer.Utils;
 
 public class FirebaseUserAccessor
 {

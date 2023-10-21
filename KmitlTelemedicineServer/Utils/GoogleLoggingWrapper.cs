@@ -1,6 +1,6 @@
 using ILogger = Google.Apis.Logging.ILogger;
 
-namespace KmitlTelemedicineServer;
+namespace KmitlTelemedicineServer.Utils;
 
 internal class GoogleLoggingWrapper : ILogger
 {

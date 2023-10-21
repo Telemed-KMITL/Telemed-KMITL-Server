@@ -1,3 +1,4 @@
+using KmitlTelemedicineServer.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
