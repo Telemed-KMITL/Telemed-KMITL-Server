@@ -166,11 +166,16 @@ public class UsersController : ControllerBase
                 .UpdateAsync(new Dictionary<string, object>
                 {
                     { "status", EnumNameConverter<UserStatus>.GetStringValue(UserStatus.InActive) }
-                });
+                }, cancellationToken: HttpContext.RequestAborted);
         }
         catch (RpcException e) when (e.StatusCode is Grpc.Core.StatusCode.NotFound)
         {
             _logger.LogTrace("User Record(id=\"{}\") not found", userRecord.Uid);
+        }
+
+        if (HttpContext.RequestAborted.IsCancellationRequested)
+        {
+            return NoContent();
         }
 
         await FirebaseAuth.DefaultInstance.UpdateUserAsync(new UserRecordArgs
@@ -198,11 +203,16 @@ public class UsersController : ControllerBase
             await _firestore
                 .Collection("users")
                 .Document(firebaseUser.Uid)
-                .CreateAsync(firestoreUser);
+                .CreateAsync(firestoreUser, HttpContext.RequestAborted);
         }
         catch (RpcException e) when (e.StatusCode is Grpc.Core.StatusCode.AlreadyExists)
         {
             return Conflict("User is already registered");
+        }
+
+        if (HttpContext.RequestAborted.IsCancellationRequested)
+        {
+            return NoContent();
         }
 
         await FirebaseAuth.DefaultInstance.SetCustomUserClaimsAsync(firebaseUser.Uid, new Dictionary<string, object>

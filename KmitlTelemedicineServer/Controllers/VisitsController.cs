@@ -44,7 +44,7 @@ public class VisitsController : ControllerBase
                 .WhereEqualTo("isFinished", false)
                 .OrderBy("createdAt")
                 .Limit(1)
-                .GetSnapshotAsync();
+                .GetSnapshotAsync(HttpContext.RequestAborted);
             if (userVisitNotFinished.Any())
                 return Ok(new CreateVisitSuccessResponse
                 {
@@ -97,7 +97,12 @@ public class VisitsController : ControllerBase
                 JitsiRoomName = roomName
             });
         }
-        await batch.CommitAsync();
+        await batch.CommitAsync(HttpContext.RequestAborted);
+
+        if (HttpContext.RequestAborted.IsCancellationRequested)
+        {
+            return NoContent();
+        }
 
         _logger.LogTrace(
             "[CreateVisit] Committed: \"{}\", \"{}\"",
