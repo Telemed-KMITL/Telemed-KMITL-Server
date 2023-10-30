@@ -30,5 +30,4 @@ services:
       - "ENABLE_RECORDING=0"
   jvb:
     networks:
-      - default # open to internet
-      - meet.jitsi
+      meet.jitsi:

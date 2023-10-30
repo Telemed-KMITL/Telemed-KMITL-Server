@@ -23,15 +23,15 @@ services:
       - kmitltelemedicineserver
       - web
     networks:
-      - default
       - meet.jitsi
+      - backend
   kmitltelemedicineserver:
     image: ${DOCKER_REGISTRY-}kmitltelemedicineserver
     build:
       context: .
       dockerfile: KmitlTelemedicineServer/Dockerfile
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     environment:
       ASPNETCORE_URLS: http://+:5000/
       GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase_adminsdk
@@ -39,6 +39,11 @@ services:
       TZ: Asia/Bangkok
     secrets:
       - firebase_adminsdk
+    networks:
+      - backend
 secrets:
   firebase_adminsdk:
     file: ./secrets/firebase-adminsdk.json
+networks:
+  backend:
+    driver: bridge
