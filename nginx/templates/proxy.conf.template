@@ -2,8 +2,8 @@ server {
     listen        443 ssl;
     server_name   default_server;
     
-    ssl_certificate /etc/letsencrypt/live/blockchain.telemed.kmitl.ac.th/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/blockchain.telemed.kmitl.ac.th/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${LETS_ENCRYPT_DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${LETS_ENCRYPT_DOMAIN}/privkey.pem;
     
     # KmitlTelemedicineServer
     
@@ -18,10 +18,10 @@ server {
         proxy_set_header   X-Forwarded-Proto $scheme;
     }
     
-    # Static pages
+    # App pages
     
-    location /app {
-        alias /var/www/html;
+    location ${APP_LOCATION} {
+        alias /var/www/app;
         index index.html;
         try_files $uri $uri/ /index.html;
     }

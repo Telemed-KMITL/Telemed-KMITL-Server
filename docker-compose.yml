@@ -2,8 +2,11 @@ version: '3.8'
 
 # noinspection ComposeUnknownKeys
 include:
-  - path: "./docker-jitsi-meet/docker-compose.yml"
-    # env_file: "./docker-jitsi-meet/.env"
+  - path:
+      - "./docker-jitsi-meet/docker-compose.yml"
+      - "./docker-compose.jitsi-override.yml"
+    env_file:
+      - "./secrets/jitsi-meet-password.env"
 services:
   nginx:
     image: nginx:latest
@@ -12,13 +15,16 @@ services:
       - "443:443"
     volumes:
       - "./nginx/templates:/etc/nginx/templates/:r"
-      - "./nginx/static:/var/www/html/:r"
-      - "${WEB_HTTP01_ROOT:-/var/www/http01}:/var/www/http01/:r"
+      - "${APP_PATH:-/var/www/html/app/}:/var/www/app/:r"
+      - "${LETS_ENCRYPT_HTTP01_ROOT:-/var/www/html/}:/var/www/http01/:r"
       - "${LETS_ENCRYPT_PATH:-/etc/letsencrypt}:/etc/letsencrypt/:r"
     environment:
-      API_LOCATION: /api
-      API_URL: http://kmitltelemedicineserver:5000
-      JITSIWEB_URL: http://web:80
+      - "TZ"
+      - "API_URL=http://kmitltelemedicineserver:5000"
+      - "JITSIWEB_URL=http://web:80"
+      - "APP_LOCATION=/app"
+      - "API_LOCATION=/api"
+      - "LETS_ENCRYPT_DOMAIN=${HOSTNAME}"
     depends_on:
       - kmitltelemedicineserver
       - web
@@ -33,10 +39,11 @@ services:
     expose:
       - "5000"
     environment:
-      ASPNETCORE_URLS: http://+:5000/
-      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase_adminsdk
-      ServerConfig:PathBase: /api
-      TZ: Asia/Bangkok
+      - "TZ"
+      - "ServerConfig:PathBase=${API_LOCATION:-/api}"
+      - "ServerConfig:FirebaseProjectId=${FIREBASE_PROJECTID}"
+      - "ASPNETCORE_URLS=http://+:5000/"
+      - "GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/firebase_adminsdk"
     secrets:
       - firebase_adminsdk
     networks:

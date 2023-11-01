@@ -6,7 +6,7 @@ server {
     
     location /.well-known/acme-challenge/ {
         default_type text/plain;
-        root /var/www/http01;
+        root /var/www/http01/;
     }
     
     # Redirect to https

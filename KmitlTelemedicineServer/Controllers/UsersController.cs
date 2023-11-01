@@ -217,7 +217,13 @@ public class UsersController : ControllerBase
 
         await FirebaseAuth.DefaultInstance.SetCustomUserClaimsAsync(firebaseUser.Uid, new Dictionary<string, object>
         {
-            { "role", EnumNameConverter<UserRole>.GetStringValue(firestoreUser.Role) }
+            { "role", EnumNameConverter<UserRole>.GetStringValue(firestoreUser.Role) },
+            {
+                "context", new Dictionary<string, object>
+                {
+                    { "user", new Dictionary<string, object> { { "name", "test" } } },
+                }
+            }
         });
 
         _logger.LogInformation("[RegisterUser] UID=\"{}\", Role={}",

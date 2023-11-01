@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    ports: [ ]
+    expose:
+      - "80"
+    environment:
+      - "HTTP_PORT=80"
+      - "DISABLE_HTTPS=1"
+      - "ENABLE_HTTP_REDIRECT=0"
+      - "ENABLE_WELCOME_PAGE=0"
+      - "ENABLE_CLOSE_PAGE=1"
+      - "ENABLE_REQUIRE_DISPLAY_NAME=1"
+      - "PUBLIC_URL=${HOSTNAME}"
+      - "TOOLBAR_BUTTONS=camera,chat,filmstrip,fullscreen,help,microphone,noisesuppression,profile,settings,stats,toggle-camera"
+  prosody:
+    volumes:
+      - "../docker-jitsi-meet-customs/prosody-plugins-custom/:/prosody-plugins-custom/:r"
+      - "../docker-jitsi-meet-customs/prosody_defaults_conf.d/:/defaults/conf.d/:r"
+    environment:
+      - "PUBLIC_URL=${HOSTNAME}"
+      - "JWT_CACHE_KEYS_URL=https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
+      - "JWT_ASAP_KEY_SERVER=-"
+      - "JWT_ASAP_REQUIRE_ROOM_CLAIM=false"
+  jvb:
+    environment:
+      - "PUBLIC_URL=${HOSTNAME}"
