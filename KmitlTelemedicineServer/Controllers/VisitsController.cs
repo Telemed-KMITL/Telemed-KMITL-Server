@@ -83,7 +83,7 @@ public class VisitsController : ControllerBase
             {
                 CreatedAt = currentTimeStamp,
                 JitsiRoomName = roomName,
-                Status = VisitStatus.Waiting,
+                CallerIds = new(),
                 IsFinished = false
             });
             batch.Create(newWaitingUserRef, new WaitingUser

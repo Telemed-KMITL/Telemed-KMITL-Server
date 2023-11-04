@@ -43,18 +43,9 @@ public class User
     [Required] [FirestoreProperty("role")] public UserRole Role { get; set; }
 }
 
-[FirestoreData(ConverterType = typeof(EnumNameConverter<VisitStatus>))]
-public enum VisitStatus
-{
-    Waiting,
-    Calling,
-    Unknown = Waiting
-}
-
-[FirestoreData]
 internal class Visit
 {
-    [FirestoreProperty("status")] public VisitStatus Status { get; set; }
+    [FirestoreProperty("callerIds")] public List<string> CallerIds { get; set; }
 
     [FirestoreProperty("isFinished")] public bool IsFinished { get; set; }
 
