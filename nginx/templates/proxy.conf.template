@@ -22,7 +22,6 @@ server {
     
     location ${APP_LOCATION} {
         alias /var/www/app;
-        index index.html;
         try_files $uri $uri/ /index.html;
     }
     
