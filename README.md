@@ -4,7 +4,7 @@ Backends of Telemed-KMITL-App
 
 ## System Structure
 
-![SystemStruture](C:\Users\sthai\Projects\Telemed-KMITL-Server\img\SystemStruture.drawio.png)
+![SystemStruture](img/SystemStruture.drawio.png)
 
 ## Setup
 
