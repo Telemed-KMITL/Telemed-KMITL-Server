@@ -43,6 +43,7 @@ public class User
     [Required] [FirestoreProperty("role")] public UserRole Role { get; set; }
 }
 
+[FirestoreData]
 internal class Visit
 {
     [FirestoreProperty("callerIds")] public List<string> CallerIds { get; set; }
